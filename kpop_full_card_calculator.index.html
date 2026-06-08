@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>滿額卡計算器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f0eb;
+      --surface: #fff;
+      --surface2: #faf7f4;
+      --border: #e8e0d6;
+      --border2: #d4c8bb;
+      --text: #1a1410;
+      --text2: #6b5d52;
+      --text3: #a89486;
+      --accent: #c45a2a;
+      --accent-bg: #fdf1eb;
+      --accent-border: #e8a882;
+      --card-color: #7c4a1e;
+      --card-bg: #fef3e8;
+      --card-border: #e8c49a;
+      --progress: #c45a2a;
+      --progress-bg: #e8d8cc;
+    }
+
+    html { font-size: 16px; }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .page-wrap {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      animation: fadeDown 0.5s ease both;
+    }
+
+    .page-header .kicker {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 0.5rem;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .page-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+
+    .page-header .rule-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent-border);
+      border-radius: 99px;
+      padding: 5px 14px;
+      font-size: 13px;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      margin-top: 0.75rem;
+    }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .metric-card.full { grid-column: 1 / -1; }
+
+    .metric-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 2.25rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      line-height: 1;
+    }
+
+    .metric-sub {
+      font-size: 13px;
+      color: var(--text3);
+      margin-top: 6px;
+    }
+
+    .card-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--card-color);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: 'DM Mono', monospace;
+      animation: popIn 0.2s ease both;
+    }
+
+    .chip svg { width: 13px; height: 13px; }
+
+    /* ── Progress ── */
+    .progress-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 14px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-text { font-size: 13px; color: var(--text2); }
+    .progress-pct { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--accent); font-weight: 500; }
+
+    .progress-track {
+      height: 8px;
+      background: var(--progress-bg);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--progress);
+      border-radius: 99px;
+      transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ── Product table ── */
+    .product-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      animation: fadeUp 0.5s 0.3s ease both;
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 1fr 100px 100px 90px;
+      gap: 8px;
+      padding: 12px 20px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .section-head span:nth-child(2) { text-align: right; }
+    .section-head span:nth-child(3) { text-align: center; }
+    .section-head span:nth-child(4) { text-align: right; }
+
+    .product-row {
+      display: grid;
+      grid-template-columns: 1fr 100px 100px 90px;
+      gap: 8px;
+      align-items: center;
+      padding: 13px 20px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .product-row:last-child { border-bottom: none; }
+    .product-row:hover { background: var(--surface2); }
+    .product-row.active { background: var(--accent-bg); }
+
+    .prod-name { font-size: 14px; font-weight: 500; color: var(--text); }
+    .prod-price { font-size: 13px; color: var(--text3); text-align: right; font-family: 'DM Mono', monospace; }
+
+    .qty-ctrl {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .qty-btn:hover {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+      color: var(--accent);
+    }
+
+    .qty-btn:active { transform: scale(0.92); }
+
+    .qty-num {
+      font-size: 15px;
+      font-weight: 500;
+      min-width: 22px;
+      text-align: center;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .prod-sub {
+      font-size: 13px;
+      text-align: right;
+      color: var(--text3);
+      font-family: 'DM Mono', monospace;
+      transition: color 0.2s;
+    }
+
+    .prod-sub.has-value { color: var(--accent); font-weight: 500; }
+
+    /* ── Footer ── */
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: var(--surface2);
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-label { font-size: 13px; color: var(--text3); font-family: 'DM Mono', monospace; }
+
+    .reset-btn {
+      font-size: 13px;
+      color: var(--text3);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .reset-btn:hover { border-color: var(--border2); color: var(--text2); }
+
+    /* ── Animations ── */
+    @keyframes fadeDown { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+      .summary-grid { grid-template-columns: 1fr; }
+      .metric-card.full { grid-column: auto; }
+      .section-head, .product-row {
+        grid-template-columns: 1fr 80px 88px 78px;
+        gap: 6px;
+        padding: 12px 14px;
+      }
+      .metric-value { font-size: 1.75rem; }
+      body { padding: 1.5rem 0.75rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <header class="page-header">
+      <p class="kicker">購物試算工具</p>
+      <h1>滿額卡計算器</h1>
+      <div class="rule-tag">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        每 ₩70,000 獲得一張滿額卡
+      </div>
+    </header>
+
+    <div class="summary-grid">
+      <div class="metric-card">
+        <div class="metric-label">總金額</div>
+        <div class="metric-value" id="total-krw">₩0</div>
+        <div class="metric-sub" id="total-items">尚未選購任何商品</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">可獲得滿額卡</div>
+        <div class="metric-value" id="card-count">0 張</div>
+        <div class="card-chips" id="card-chips"></div>
+      </div>
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-meta">
+        <span class="progress-text" id="progress-text">距離第一張滿額卡還需 ₩70,000</span>
+        <span class="progress-pct" id="progress-pct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="product-section">
+      <div class="section-head">
+        <span>商品名稱</span>
+        <span>單價 (₩)</span>
+        <span>數量</span>
+        <span>小計 (₩)</span>
+      </div>
+      <div id="product-grid"></div>
+      <div class="footer-row">
+        <span class="footer-label" id="footer-total">合計 ₩0</span>
+        <button class="reset-btn" onclick="resetAll()">重置全部</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const THRESHOLD = 70000;
+    const products = [
+      { name: '隨機卡包', price: 5700 },
+      { name: '照片組', price: 4700 },
+      { name: '彩虹娃', price: 20900 },
+      { name: '雨衣娃娃吊飾', price: 14200 },
+      { name: '風衣組', price: 111600 },
+      { name: '短褲組', price: 45600 },
+      { name: '短T組', price: 42700 },
+      { name: '掛布海報', price: 30400 },
+      { name: 'DIY吊飾組', price: 23700 },
+      { name: '水球', price: 17100 },
+      { name: '髮圈', price: 10400 },
+      { name: '包包', price: 42700 },
+    ];
+
+    const qtys = new Array(products.length).fill(0);
+
+    function fmt(n) {
+      return '₩' + n.toLocaleString('zh-TW');
+    }
+
+    function update() {
+      let total = 0, itemCount = 0;
+      products.forEach((p, i) => {
+        const q = qtys[i];
+        const sub = p.price * q;
+        total += sub;
+        itemCount += q;
+        const subEl = document.getElementById('sub-' + i);
+        const rowEl = document.getElementById('row-' + i);
+        if (subEl) {
+          subEl.textContent = q > 0 ? fmt(sub) : '—';
+          subEl.className = 'prod-sub' + (q > 0 ? ' has-value' : '');
+        }
+        if (rowEl) rowEl.classList.toggle('active', q > 0);
+      });
+
+      const cards = Math.floor(total / THRESHOLD);
+      const remainder = total % THRESHOLD;
+      const toNext = THRESHOLD - remainder;
+      const pct = Math.round((remainder / THRESHOLD) * 100);
+
+      document.getElementById('total-krw').textContent = fmt(total);
+      document.getElementById('total-items').textContent = itemCount > 0 ? `共 ${itemCount} 件商品` : '尚未選購任何商品';
+      document.getElementById('card-count').textContent = cards + ' 張';
+      document.getElementById('footer-total').textContent = '合計 ' + fmt(total);
+
+      const chipsEl = document.getElementById('card-chips');
+      chipsEl.innerHTML = '';
+      const displayCards = Math.min(cards, 10);
+      for (let c = 0; c < displayCards; c++) {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>#${c + 1}`;
+        chip.style.animationDelay = (c * 0.04) + 's';
+        chipsEl.appendChild(chip);
+      }
+      if (cards > 10) {
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.textContent = '+' + (cards - 10);
+        chipsEl.appendChild(chip);
+      }
+
+      document.getElementById('progress-fill').style.width = (total === 0 ? 0 : pct) + '%';
+      document.getElementById('progress-pct').textContent = (total === 0 ? 0 : pct) + '%';
+
+      if (total === 0) {
+        document.getElementById('progress-text').textContent = '距離第一張滿額卡還需 ' + fmt(THRESHOLD);
+      } else if (remainder === 0) {
+        document.getElementById('progress-text').textContent = `恭喜！剛好達成 ${cards} 張滿額卡 🎉`;
+      } else {
+        document.getElementById('progress-text').textContent = `距離第 ${cards + 1} 張滿額卡還需 ${fmt(toNext)}`;
+      }
+    }
+
+    function changeQty(i, delta) {
+      qtys[i] = Math.max(0, qtys[i] + delta);
+      document.getElementById('qty-' + i).textContent = qtys[i];
+      update();
+    }
+
+    function resetAll() {
+      for (let i = 0; i < products.length; i++) {
+        qtys[i] = 0;
+        const el = document.getElementById('qty-' + i);
+        if (el) el.textContent = '0';
+      }
+      update();
+    }
+
+    const grid = document.getElementById('product-grid');
+    products.forEach((p, i) => {
+      const row = document.createElement('div');
+      row.className = 'product-row';
+      row.id = 'row-' + i;
+      row.innerHTML = `
+        <span class="prod-name">${p.name}</span>
+        <span class="prod-price">${p.price.toLocaleString('zh-TW')}</span>
+        <div class="qty-ctrl">
+          <button class="qty-btn" onclick="changeQty(${i}, -1)" aria-label="減少">−</button>
+          <span class="qty-num" id="qty-${i}">0</span>
+          <button class="qty-btn" onclick="changeQty(${i}, 1)" aria-label="增加">+</button>
+        </div>
+        <span class="prod-sub" id="sub-${i}">—</span>
+      `;
+      grid.appendChild(row);
+    });
+
+    update();
+  </script>
+</body>
+</html>
